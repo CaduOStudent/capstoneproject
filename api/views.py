@@ -20,6 +20,11 @@ health_view = HealthView.as_view()
 # View for listing all books or creating a new one
 class BookView(APIView):
     """ Handles GET for listing all books and POST for creating a new book """
+    """
+    GET /api/books/    => list all books
+    POST /api/books/   => create a new book
+    """
+
 
     def get(self, request, *args, **kwargs):
         all_books = Book.objects.all()
@@ -45,6 +50,13 @@ book_view = BookView.as_view()
 # View for retrieving, updating, or deleting a single book by its ID (pk)
 class BookDetailView(APIView):
     """ Handles GET, PUT, PATCH, DELETE for an individual book """
+    """
+    GET    /api/books/{pk}/   => retrieve a book
+    PUT    /api/books/{pk}/   => full update
+    PATCH  /api/books/{pk}/   => partial update
+    DELETE /api/books/{pk}/   => delete a book
+    """
+
 
     def get(self, request, pk, *args, **kwargs):
         book = get_object_or_404(Book, pk=pk)
