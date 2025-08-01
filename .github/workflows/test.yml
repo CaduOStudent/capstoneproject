@@ -1,0 +1,108 @@
+name: Run Django Tests  # Workflow name displayed in GitHub UI
+
+on:
+  pull_request:  # Run workflow when a pull request targets 'main'
+    branches: [main]
+  push:          # Run workflow on push to 'main'
+    branches: [main]
+
+jobs:
+  test:  # Job for running Django unit tests with coverage
+    runs-on: ubuntu-latest  # Use GitHub's latest Ubuntu runner
+
+    strategy:  # Optionally test against multiple Python versions
+      matrix:
+        python-version: [3.11]
+
+    steps:
+      - name: Checkout code  # Grab your repo's source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python  # Install desired Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies  # Install project and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django coverage  # Add test tools
+
+      - name: Run tests with coverage  # Execute tests and show code coverage
+        run: |
+          coverage run manage.py test         # Run Django test suite
+          coverage report                     # Display summary in terminal
+          coverage xml                        # Create XML report for Codecov
+        continue-on-error: false             # Fail job if tests fail
+
+      - name: Upload coverage to Codecov  # Optional: show coverage report online
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
+          flags: unit-tests
+          name: codecov-coverage
+        if: success()  
+
+  runmigrations:  # Apply all migrations to test database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run django migrate  # Apply migrations
+        run: python manage.py migrate
+
+  migrations-check:  # Check that migration files are committed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run makemigrations check  # Detect model changes without migration files
+        run: python manage.py makemigrations --check
+
+  build-docker-image:  # Only runs when main branch has successful tests/migrations
+    runs-on: ubuntu-latest
+    needs: [test, runmigrations, migrations-check]  # Run only after these jobs pass
+    if: github.ref == 'refs/heads/main'  # Only on main branch
+    permissions:  # Required for pushing to GHCR
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR  # Authenticate to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta  # Generate image tags/labels dynamically
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/CaduOStudent/capstoneproject  # My repo namespace
+
+      - name: Build and push  # Build Docker image and push to GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: .                            # Build from root
+          push: true                            # Push image to registry
+          tags: ${{ steps.meta.outputs.tags }}  # Auto-generated tags
+          labels: ${{ steps.meta.outputs.labels }}  # Optional metadata
