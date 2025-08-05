@@ -5,5 +5,6 @@ urlpatterns = [
     path('health/', health_view, name='health'),
     path('books/', book_view, name='book-list'),
     path('books/<int:pk>/', book_detail_view, name='book-detail'),
-    path('books/bulk-create/', BulkCreateBooksView.as_view(), name='bulk-create-books'),
+    # Add any additional paths here
+    # Example: path('books/bulk-create/', BulkCreateBooksView.as_view(), name='bulk-create-books'),
 ]

@@ -92,15 +92,11 @@ class BookDetailView(APIView):
 
 book_detail_view = BookDetailView.as_view()
 
-class BulkCreateBooksView(APIView):
-    def post(self, request):
-        if isinstance(request.data, list):
-            serializer = BookSerializer(data=request.data, many=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"error": "Expected a list of books"}, status=status.HTTP_400_BAD_REQUEST)
+# Bulk Create View
+# This view allows for bulk creation of books via a POST request.
+# It accepts a list of book data and validates each entry.
+# If all entries are valid, it saves them in one go and returns the created objects.
+# If any entry is invalid, it returns an error response with details.
 
 # This view allows bulk creation of books by accepting a list of book data.
 # It validates the entire list and saves all valid entries in one go.
