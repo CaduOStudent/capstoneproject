@@ -1,0 +1,86 @@
+Capstone Project: Book Catalog with 
+CI/CD Pipeline  
+Overview 
+You are an engineer at a software company tasked with designing, building, and deploying a 
+Book Catalog API as part of a new platform for managing book collections. 
+ 
+Your responsibilities include: 
+●  Developing a RESTful API with Django 
+●  Automating Builds and Tests 
+●  Packaging the application to a Docker Image 
+●  Deploying it to a Kubernetes Cluster using Helm Charts 
+●  Documenting the full end-to-end process 
+ 
+Requirements 
+Your project must include 
+API Implementation 
+Use Django to create a REST API with: 
+●  CRUD endpoints for managing books 
+●  A Book model storing at least: 
+○  Title 
+○  Author 
+○  ISBN 
+○  Published date 
+●  Data validation with serialisers  
+Testing 
+●  Write unit tests with Django’s test framework 
+●  Minimum of 3 tests covering key functionality  
+Version Control 
+●  Use Git for source control 
+●  Commit regularly with descriptive messages using Conventional Commits 
+●  Host your code in a GitHub repository 
+●  (Optional) For each change, submit a new PR instead of pushing to directly to the 
+default branch  
+CI/CD Pipeline 
+Create a GitHub Actions workflow that: 
+●  Installs dependencies 
+●  Runs tests 
+●  Builds the Docker images 
+●  Pushes the image to Docker Hub or GitHub Container Registry 
+●  Deploys to Kubernetes automatically when changes are merged to the main branch  
+Containerization 
+●  Write a Dockerfile to package your Django app 
+●  Configure docker-compose.yml for local development  
+Kubernetes Deployment 
+●  Create a Helm chart to deploy your app into Kubernetes 
+●  Include configuration for: 
+○  Deployment 
+○  Service 
+○  Ingress 
+○  ConfigMap or Secret for environment variables  
+Documentation 
+Write a README.md that includes: 
+●  Project overview 
+●  API usage examples 
+●  Local build and run instructions 
+●  CI/CD pipeline explanation 
+●  Kubernetes and Helm setup instructions  
+Report 
+Submit a written report (PDF) that explains: 
+●  Your end-to-end workflow 
+●  How your Docker image is built 
+●  How your CI/CD pipeline works 
+●  How your Helm chart deploys your application 
+●  Lessons learned and challenges faced 
+ 
+Deliverables 
+By the deadline, you must submit: 
+ 
+●  A link to your GitHub repository containing: 
+○  All project code 
+○  Dockerfile and Helm chart 
+○  GitHub Actions workflow 
+○  README.md 
+●  A PDF report documenting your process and results 
+●  (Optional) A short demo video (3–5 min) showing your deployment in action 
+ Tips for Success 
+●  Start small: get the Django app working before creating the CI/CD workflow and 
+integrating Kubernetes. 
+●  Commit often and push your work to GitHub. 
+●  Use a clean and readable Helm chart structure. 
+●  Test your pipeline step by step. 
+●  Document everything thoroughly in your report. 
+●  Go back to the class recordings if you need to 
+●  Lean on the documentation provided in Moodle 
+ 
+Feel free to reach out to egarcia@cct.ie if you have any questions
