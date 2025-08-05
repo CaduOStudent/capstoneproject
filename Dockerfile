@@ -1,11 +1,19 @@
-FROM python:3.13-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install system dependencies
+RUN apt-get update && apt-get install -y gcc libpq-dev
 
-RUN apt-get update && apt-get upgrade -y && pip install --upgrade pip && pip install -r requirements.txt && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Upgrade pip
+RUN pip install --upgrade pip
 
+# Copy requirements.txt and install dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+
+# Copy the rest of the application
 COPY . .
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the application
+CMD ["gunicorn", "bookcatalog.wsgi:application", "--bind", "0.0.0.0:8000"]
