@@ -101,7 +101,7 @@ class BulkCreateBooksView(APIView):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "Expected a list of books"}, status=status.HTTP_400_BAD_REQUEST)
-book_bulk_create_view = BulkCreateBooksView.as_view()
+bulk_create_view = BulkCreateBooksView.as_view()
 # This view allows bulk creation of books by accepting a list of book data.
 # It validates the entire list and saves all valid entries in one go.
 # If any entry is invalid, it returns an error response with details.
