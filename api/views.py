@@ -97,8 +97,17 @@ book_detail_view = BookDetailView.as_view()
 # It accepts a list of book data and validates each entry.
 # If all entries are valid, it saves them in one go and returns the created objects.
 # If any entry is invalid, it returns an error response with details.
+class BulkCreateBooksView(APIView):
+    """ Handles bulk creation of books """
+    """
+    POST /api/books/bulk-create/ => create multiple books
+    """
 
-# This view allows bulk creation of books by accepting a list of book data.
-# It validates the entire list and saves all valid entries in one go.
-# If any entry is invalid, it returns an error response with details.
-# This is useful for importing large datasets or creating multiple entries at once.
+    def post(self, request, *args, **kwargs):
+        serializer = BookSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+bulk_create_books_view = BulkCreateBooksView.as_view()

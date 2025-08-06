@@ -39,4 +39,26 @@ class BookAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Book.objects.filter(id=book.id).exists())
         
+    def test_bulk_create_books(self):
+        bulk_books_data = [
+            {
+                "title": "One Hundred Years of Solitude",
+                "author": "Gabriel García Márquez",
+                "isbn": "9780060883287",
+                "published_date": "1967-06-05"
+            },
+            {
+                "title": "The Hobbit",
+                "author": "J. R. R. Tolkien",
+                "isbn": "9780007458424",
+                "published_date": "1937-09-21"
+            }
+        ]
+        response = self.client.post("/api/books/bulk-create/", bulk_books_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["title"], "One Hundred Years of Solitude")
+        self.assertEqual(response.data[1]["title"], "The Hobbit")
+        self.assertEqual(Book.objects.count(), 2)
+        
         """test"""
