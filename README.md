@@ -1,5 +1,6 @@
 ## capstoneProject
 
+This project have the objective of creating a bookcatalog API using python
 
 
 
