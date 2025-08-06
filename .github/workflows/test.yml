@@ -1,108 +1,109 @@
-name: Run Django Tests  # Workflow name displayed in GitHub UI
+name: Run Django Tests and Build Docker Image  # Workflow name displayed in GitHub UI
 
 on:
-  pull_request:  # Run workflow when a pull request targets 'main'
+  pull_request:  # Trigger workflow on pull requests targeting 'main'
     branches: [main]
-  push:          # Run workflow on push to 'main'
+  push:  # Trigger workflow on pushes to 'main'
     branches: [main]
 
 jobs:
-  test:  # Job for running Django unit tests with coverage
+  test:  # Job for running Django unit tests
+    name: Run Django Tests
     runs-on: ubuntu-latest  # Use GitHub's latest Ubuntu runner
 
     strategy:  # Optionally test against multiple Python versions
       matrix:
-        python-version: [3.11]
+        python-version: [3.11]  # Specify Python version to test against
 
     steps:
-      - name: Checkout code  # Grab your repo's source code
+      - name: Checkout code  # Step to clone the repository
         uses: actions/checkout@v4
 
-      - name: Set up Python  # Install desired Python version
+      - name: Set up Python  # Install the specified Python version
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies  # Install project and test dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-django coverage  # Add test tools
+          python -m pip install --upgrade pip  # Upgrade pip
+          pip install -r requirements.txt  # Install project dependencies
+          pip install pytest pytest-django coverage  # Install test tools
 
-      - name: Run tests with coverage  # Execute tests and show code coverage
+      - name: Run tests with coverage  # Execute tests and generate coverage report
         run: |
-          coverage run manage.py test         # Run Django test suite
-          coverage report                     # Display summary in terminal
-          coverage xml                        # Create XML report for Codecov
-        continue-on-error: false             # Fail job if tests fail
+          coverage run manage.py test  # Run Django test suite
+          coverage report  # Display coverage summary in terminal
+          coverage xml  # Generate XML report for Codecov
+        continue-on-error: false  # Fail the job if tests fail
 
-      - name: Upload coverage to Codecov  # Optional: show coverage report online
+      - name: Upload coverage to Codecov  # Optional: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.xml
-          flags: unit-tests
-          name: codecov-coverage
-        if: success()  
+          files: coverage.xml  # Specify the coverage report file
+          flags: unit-tests  # Add a flag for unit tests
+          name: codecov-coverage  # Name the coverage report
+        if: success()  # Only run this step if the tests pass
 
-  runmigrations:  # Apply all migrations to test database
+  runmigrations:  # Job to apply migrations to the test database
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout code  # Clone the repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies  # Install project dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run django migrate  # Apply migrations
+      - name: Run django migrate  # Apply migrations to the database
         run: python manage.py migrate
 
-  migrations-check:  # Check that migration files are committed
+  migrations-check:  # Job to ensure migration files are committed
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout code  # Clone the repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies  # Install project dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run makemigrations check  # Detect model changes without migration files
+      - name: Run makemigrations check  # Check for uncommitted migration files
         run: python manage.py makemigrations --check
 
-  build-docker-image:  # Only runs when main branch has successful tests/migrations
+  build-docker-image:  # Job to build and push the Docker image
     runs-on: ubuntu-latest
     needs: [test, runmigrations, migrations-check]  # Run only after these jobs pass
-    if: github.ref == 'refs/heads/main'  # Only on main branch
-    permissions:  # Required for pushing to GHCR
+    if: github.ref == 'refs/heads/main'  # Only run on the 'main' branch
+    permissions:  # Required permissions for pushing to GHCR
       contents: read
       packages: write
       attestations: write
       id-token: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout code  # Clone the repository
         uses: actions/checkout@v4
 
       - name: Login to GHCR  # Authenticate to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io  # GitHub Container Registry
+          username: ${{ github.actor }}  # Use the GitHub actor for authentication
+          password: ${{ secrets.GITHUB_TOKEN }}  # Use the GitHub token for authentication
 
-      - name: Docker meta  # Generate image tags/labels dynamically
+      - name: Docker meta  # Generate image tags and labels dynamically
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/CaduOStudent/capstoneproject  # My repo namespace
+          images: ghcr.io/CaduOStudent/capstoneproject  # Specify the image namespace
 
-      - name: Build and push  # Build Docker image and push to GHCR
+      - name: Build and push  # Build and push the Docker image to GHCR
         uses: docker/build-push-action@v6
         with:
-          context: .                            # Build from root
-          push: true                            # Push image to registry
-          tags: ${{ steps.meta.outputs.tags }}  # Auto-generated tags
-          labels: ${{ steps.meta.outputs.labels }}  # Optional metadata
+          context: .  # Build from the root directory
+          push: true  # Push the image to the registry
+          tags: ${{ steps.meta.outputs.tags }}  # Use auto-generated tags
+          labels: ${{ steps.meta.outputs.labels }}  # Add optional metadata labels
