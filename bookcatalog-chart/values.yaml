@@ -1,11 +1,29 @@
 # values.yaml
 
+# ------------------------------------------------
+# Probe configuration
+# ------------------------------------------------
+readinessProbe:
+  enabled: true
+  path: /api/health/
+  port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /api/health/
+  port: 8000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+
 # Default number of replicas for your Deployment
 replicaCount: 1
 
 # Horizontal Pod Autoscaler settings
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
