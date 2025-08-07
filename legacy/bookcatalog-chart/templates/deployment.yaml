@@ -3,30 +3,27 @@ kind: Deployment
 metadata:
   name: {{ include "bookcatalog-chart.fullname" . }}
   labels:
-    {{- include "bookcatalog-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
+      app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ toJson .Values.app.command }}
           ports:
-            - containerPort: {{ .Values.service.targetPort }}
-
-          envFrom:
-            - configMapRef:
-                name: {{ include "bookcatalog-chart.fullname" . }}-config
-            - secretRef:
-                name: {{ include "bookcatalog-chart.fullname" . }}-secret
-
+            - containerPort: {{ .Values.service.port }}
+          # Readiness Probe
           {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -36,6 +33,7 @@ spec:
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           {{- end }}
 
+          # Liveness Probe
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
@@ -45,5 +43,10 @@ spec:
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
           {{- end }}
 
-      imagePullSecrets:
-        - name: {{ .Values.image.pullSecret | default "" }}
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

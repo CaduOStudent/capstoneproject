@@ -1,8 +1,32 @@
-# values.yaml
+replicaCount: 1
 
-# ------------------------------------------------
-# Probe configuration
-# ------------------------------------------------
+image:
+  repository: ghcr.io/caduostudent/capstoneproject
+  tag: "main"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: bookapi.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+config:
+  DJANGO_SETTINGS_MODULE: bookapi.settings
+  DEBUG: "false"
+
+secret:
+  djangoSecretKey: "m+j^4fwe@z_b9odd*xpy!w&huy#vcoibu0od*!1^#-%dm+_0cw"
+  githubToken:    "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"
+
 readinessProbe:
   enabled: true
   path: /api/health/
@@ -16,70 +40,3 @@ livenessProbe:
   port: 8000
   initialDelaySeconds: 15
   periodSeconds: 20
-
-
-# Default number of replicas for your Deployment
-replicaCount: 1
-
-# Horizontal Pod Autoscaler settings
-autoscaling:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-
-migrations:
-  enabled: true
-# -------------------------------------------------------------------
-# ServiceAccount settings
-# -------------------------------------------------------------------
-serviceAccount:
-  # Create a ServiceAccount (true) or skip (false)
-  create: false
-
-  # If you set create: true, you can specify a custom name here.
-  # Otherwise, Helm will generate one.
-  name: ""
-# -------------------------------------------------------------------
-# Image settings
-# -------------------------------------------------------------------
-
-image:
-  repository: ghcr.io/caduostudent/capstoneproject
-  tag: main
-  pullPolicy: IfNotPresent
-# -------------------------------------------------------------------
-# Image pull secrets
-# -------------------------------------------------------------------
-
-# If you use multiple secrets, list them here
-imagePullSecrets:
-  - name: capstone
-
-# -------------------------------------------------------------------
-
-# Service settings
-# -------------------------------------------------------------------
-
-
-ingress:
-  enabled: true
-  hosts:
-    - host: bookapi.local
-      paths: 
-        - /
-  tls:
-    - hosts: 
-        - "bookapi.local"
-      secretName: bookapi-tls
-
-service:
-  port: 8000
-# -------------------------------------------------------------------
-
-app:
-  command:
-    - python
-    - manage.py
-    - runserver
-    - 0.0.0.0:8000

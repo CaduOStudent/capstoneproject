@@ -1,0 +1,17 @@
+{{- if .Values.ingress.enabled }}
+Your application has been deployed and is available via Ingress at:
+
+{{- range .Values.ingress.hosts }}
+  {{- $host := .host }}
+  {{- range .paths }}
+  - http://{{ $host }}{{ . }}
+  {{- end }}
+{{- end }}
+
+{{- else }}
+Your application has been deployed but Ingress is disabled.
+You can port-forward to access it locally:
+
+  kubectl port-forward svc/{{ include "bookcatalog-chart.fullname" . }} \
+    {{ .Values.service.port }}:{{ .Values.service.port }} --namespace {{ .Release.Namespace }}
+{{- end }}

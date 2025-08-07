@@ -2,16 +2,21 @@
 Your application has been deployed and is available via Ingress at:
 
 {{- range .Values.ingress.hosts }}
-  {{- $host := .host }}
-  {{- range .paths }}
-  - http://{{ $host }}{{ . }}
-  {{- end }}
+  http://{{ .host }}
 {{- end }}
+
+To access locally, ensure your /etc/hosts contains:
+
+  127.0.0.1 {{ (index .Values.ingress.hosts 0).host }}
+
+Then run:
+  kubectl port-forward -n {{ .Release.Namespace }} \
+    svc/{{ include "bookcatalog-chart.fullname" . }} 8080:{{ .Values.service.port }}
 
 {{- else }}
 Your application has been deployed but Ingress is disabled.
-You can port-forward to access it locally:
+You can port-forward directly:
 
-  kubectl port-forward svc/{{ include "bookcatalog-chart.fullname" . }} \
-    {{ .Values.service.port }}:{{ .Values.service.port }} --namespace {{ .Release.Namespace }}
+  kubectl port-forward -n {{ .Release.Namespace }} \
+    svc/{{ include "bookcatalog-chart.fullname" . }} 8080:{{ .Values.service.port }}
 {{- end }}
