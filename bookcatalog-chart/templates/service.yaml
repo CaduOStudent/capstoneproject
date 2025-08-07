@@ -3,15 +3,12 @@ kind: Service
 metadata:
   name: {{ include "bookcatalog-chart.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "bookcatalog-chart.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
-  ports:
-    - name: http
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}    # <- use numeric port, not "http"
-      protocol: TCP
   selector:
-    app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
