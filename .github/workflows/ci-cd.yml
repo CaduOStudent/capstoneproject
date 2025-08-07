@@ -10,8 +10,13 @@ jobs:
     uses: ./.github/workflows/chart-testing.yml
 
   # 2. Run Django tests
-  django-tests:
+  run-django-tests:
     uses: ./.github/workflows/django-tests.yml
+    with:
+      python-version: '3.10'
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   # 3. Create a semantic release (runs .github/workflows/release.yml)
   release:
