@@ -8,6 +8,11 @@ jobs:
   # 1. Lint your Helm chart
   chart-testing:
     uses: ./.github/workflows/chart-testing.yml
+    with:
+      chart-path: 'bookcatalog-chart'
+      helm-version: 'v3.14.0'
+      ct-version: '3.10.0'
+
 
   # 2. Run Django tests
   run-django-tests:

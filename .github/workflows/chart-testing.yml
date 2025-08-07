@@ -1,51 +1,60 @@
 # .github/workflows/chart-testing.yml
-name: SSH-Powered Helm Chart Testing
-
 on:
-  push:
-    paths:
-      - 'bookcatalog-chart/**'
-  pull_request:
-    paths:
-      - 'bookcatalog-chart/**'
+  workflow_call:
+    inputs:
+      chart-path:
+        description: 'Path to the Helm chart directory'
+        required: true
+        type: string
+        default: 'bookcatalog-chart'
+      helm-version:
+        description: 'Helm CLI version'
+        required: false
+        type: string
+        default: 'v3.14.0'
+      ct-version:
+        description: 'chart-testing CLI version'
+        required: false
+        type: string
+        default: '3.10.0'
+    secrets:
+      KUBE_CONFIG:
+        description: 'Kubernetes config for real cluster installs'
+        required: false
 
 jobs:
-  chart-testing:
+  lint-and-test:
+    name: Lint and Install Helm Chart
     runs-on: ubuntu-latest
 
     steps:
-      - name: Load SSH key
-        uses: webfactory/ssh-agent@v0.8.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
-      - name: Checkout repo via SSH
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # forces an SSH checkout instead of HTTPS
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-known-hosts: github.com
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
-          version: v3.14.0
+          version: ${{ inputs.helm-version }}
 
       - name: Install chart-testing CLI
         run: |
-          CT_VERSION="3.10.0"
-          curl -sL "https://github.com/helm/chart-testing/releases/download/v${CT_VERSION}/chart-testing_${CT_VERSION}_Linux_x86_64.tar.gz" \
+          CT_VER="${{ inputs.ct-version }}"
+          curl -sL \
+            "https://github.com/helm/chart-testing/releases/download/v${CT_VER}/chart-testing_${CT_VER}_Linux_x86_64.tar.gz" \
             | tar xz
           sudo mv ct /usr/local/bin/
 
       - name: Lint Helm chart
-        run: ct lint --charts bookcatalog-chart
+        run: ct lint --charts "${{ inputs.chart-path }}"
 
       - name: Install chart in test namespace
+        if: secrets.KUBE_CONFIG != ''
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
           NAMESPACE="ct-test-${{ github.sha }}"
           kubectl create namespace "${NAMESPACE}" || true
           ct install \
-            --charts bookcatalog-chart \
-            --namespace "${NAMESPACE}" \
+            --charts "${{ inputs.chart-path }}" \
+            --namespace "${NAMESPACE }}" \
             --skip-cleanup
