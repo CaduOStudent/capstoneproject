@@ -1,13 +1,16 @@
+# .github/workflows/cd.yml
 name: CD to k3d Dev Cluster
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Build & Push Image"]
+    types: 
+      - completed
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    needs: [ 'docker-build' ]
     steps:
       - uses: actions/checkout@v4
 
