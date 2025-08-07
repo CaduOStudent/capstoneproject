@@ -28,7 +28,7 @@ jobs:
           kubectl create secret docker-registry ghcr-creds \
             --docker-server=ghcr.io \
             --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --docker-password=${{ secrets.GITHUB_PAT }} \
             --namespace default || true
 
       - name: Deploy Helm Chart
