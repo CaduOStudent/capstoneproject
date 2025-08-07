@@ -28,7 +28,8 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
 
-
+migrations:
+  enabled: true
 # -------------------------------------------------------------------
 # ServiceAccount settings
 # -------------------------------------------------------------------
