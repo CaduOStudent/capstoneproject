@@ -24,8 +24,9 @@ config:
   DEBUG: "false"
 
 secret:
-  djangoSecretKey: "m+j^4fwe@z_b9odd*xpy!w&huy#vcoibu0od*!1^#-%dm+_0cw"
-  githubToken:    "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"
+  djangoSecretKey: {{ .Values.secret.djangoSecretKey | quote }}
+  githubToken:    {{ .Values.secret.githubToken    | quote }}
+  github_fine_grained_token: {{ .Values.secret.github_fine_grained_token | quote }}
 
 readinessProbe:
   enabled: true
