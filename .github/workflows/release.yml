@@ -1,0 +1,31 @@
+name: Semantic Release
+on:
+  workflow_call:
+
+jobs:
+  semantic-release:
+    name: Run semantic-release
+    runs-on: ubuntu-latest
+
+    # expose the version for downstream workflows
+    outputs:
+      new-release-version: ${{ steps.release.outputs.new-release-version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Perform semantic-release
+        id: release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
