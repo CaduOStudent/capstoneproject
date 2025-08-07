@@ -1,0 +1,32 @@
+name: Helm Chart Testing
+
+on:
+  pull_request:
+    paths:
+      - 'bookcatalog-chart/**'
+      - '.ct.yaml'
+
+jobs:
+  chart-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Install Chart Testing Tool
+        uses: helm/chart-testing-action@v3
+        with:
+          version: v3.12.0
+
+      - name: Run chart-testing
+        run: |
+          ct lint --config .ct.yaml
+          ct install --config .ct.yaml
+
+      - name: Run Helm Unit Tests (optional)
+        run: |
+          helm plugin install https://github.com/quintush/helm-unittest
+          helm unittest bookcatalog-chart

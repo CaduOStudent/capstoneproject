@@ -1,0 +1,11 @@
+chart-dirs:
+  - bookcatalog-chart
+
+# run HLM (Helm Lint, Helm Template) and unit tests
+lint-conf:
+  ignore:
+    - should-not-lint.yaml
+
+test-conf:
+  enabled: true
+  namespace: ct
