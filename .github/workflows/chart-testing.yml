@@ -1,32 +1,51 @@
-name: Helm Chart Testing
+# .github/workflows/chart-testing.yml
+name: SSH-Powered Helm Chart Testing
 
 on:
+  push:
+    paths:
+      - 'bookcatalog-chart/**'
   pull_request:
     paths:
       - 'bookcatalog-chart/**'
-      - '.ct.yaml'
 
 jobs:
-  chart-test:
+  chart-testing:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-
-      - name: Install Chart Testing Tool
-        uses: helm/chart-testing-action@v2
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.8.1
         with:
-          version: v3.12.0
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Checkout repo via SSH
+        uses: actions/checkout@v4
+        with:
+          # forces an SSH checkout instead of HTTPS
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-known-hosts: github.com
 
-      - name: Run chart-testing
-        run: |
-          ct lint --config .ct.yaml
-          ct install --config .ct.yaml
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.0
 
-      - name: Run Helm Unit Tests (optional)
+      - name: Install chart-testing CLI
         run: |
-          helm plugin install https://github.com/quintush/helm-unittest
-          helm unittest bookcatalog-chart
+          CT_VERSION="3.10.0"
+          curl -sL "https://github.com/helm/chart-testing/releases/download/v${CT_VERSION}/chart-testing_${CT_VERSION}_Linux_x86_64.tar.gz" \
+            | tar xz
+          sudo mv ct /usr/local/bin/
+
+      - name: Lint Helm chart
+        run: ct lint --charts bookcatalog-chart
+
+      - name: Install chart in test namespace
+        run: |
+          NAMESPACE="ct-test-${{ github.sha }}"
+          kubectl create namespace "${NAMESPACE}" || true
+          ct install \
+            --charts bookcatalog-chart \
+            --namespace "${NAMESPACE}" \
+            --skip-cleanup
