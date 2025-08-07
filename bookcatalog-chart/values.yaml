@@ -59,12 +59,22 @@ imagePullSecrets:
 
 # Service settings
 # -------------------------------------------------------------------
-service:
-  type: ClusterIP
-  port: 8000
+
 
 ingress:
-  enabled: false
+  enabled: true
+  hosts:
+    - host: bookapi.local
+      paths: 
+        - /
+  tls:
+    - hosts: 
+        - "bookapi.local"
+      secretName: bookapi-tls
+
+service:
+  port: 8000
+# -------------------------------------------------------------------
 
 app:
   command:
