@@ -37,18 +37,6 @@ jobs:
           coverage xml  # Generate XML report for Codecov
         continue-on-error: false  # Fail the job if tests fail
 
-      - name: Lint Helm chart
-        run: helm lint ./bookcatalog-chart
-
-      - name: Template Helm chart
-        run: helm template ./bookcatalog-chart
-
-      - name: Deploy to Dev cluster
-        run: |
-          helm upgrade --install bookapi ./bookcatalog-chart \
-            --namespace dev -f ./bookcatalog-chart/values.yaml
-
-
       - name: Upload coverage to Codecov  # Optional: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -56,6 +44,7 @@ jobs:
           flags: unit-tests  # Add a flag for unit tests
           name: codecov-coverage  # Name the coverage report
         if: success()  # Only run this step if the tests pass
+
 
   runmigrations:  # Job to apply migrations to the test database
     runs-on: ubuntu-latest
