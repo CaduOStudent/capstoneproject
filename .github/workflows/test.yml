@@ -46,7 +46,8 @@ jobs:
       - name: Deploy to Dev cluster
         run: |
           helm upgrade --install bookapi ./bookcatalog-chart \
-            --namespace dev -f values.dev.yaml
+            --namespace dev -f ./bookcatalog-chart/values.yaml
+
 
       - name: Upload coverage to Codecov  # Optional: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
