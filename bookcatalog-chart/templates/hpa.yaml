@@ -2,31 +2,22 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "bookcatalog-chart.fullname" . }}
+  name: {{ include "bookcatalog-chart.fullname" . }}-hpa
   labels:
-    {{- include "bookcatalog-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "bookcatalog-chart.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
-    kind: Deployment
-    name: {{ include "bookcatalog-chart.fullname" . }}
+    kind:       Deployment
+    name:       {{ include "bookcatalog-chart.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
 {{- end }}
