@@ -1,59 +1,64 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
+
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+
+permissions:
+  contents: write    # for checkout + bump commit
+  packages: write    # for GHCR pushes
+  id-token: write    # in case you add OIDC later
 
 jobs:
-  # 1. Lint your Helm chart
+  # 1. Lint & test Helm chart
   chart-testing:
     uses: ./.github/workflows/chart-testing.yml
     with:
-      chart-path: 'bookcatalog-chart'
-      helm-version: 'v3.14.0'
-      ct-version: '3.10.0'
-
+      chart-path: bookcatalog-chart
+      helm-version: v3.14.0
+      ct-version: 3.10.0
 
   # 2. Run Django tests
   run-django-tests:
+    needs: chart-testing
     uses: ./.github/workflows/django-tests.yml
     with:
-      python-version: '3.10'
-    
+      python-version: 3.10
+    secrets:
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}  # optional
 
-  # 3. Create a semantic release (runs .github/workflows/release.yml)
+  # 3. Semantic release
   release:
+    needs: run-django-tests
     uses: ./.github/workflows/release.yml
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 4. Build & push Docker image
   build-docker-image:
-    needs: [release]
+    needs: release
     uses: ./.github/workflows/docker-build.yml
     with:
-      # Provide the semantically-released version to your docker-build job
       image-tag: ${{ needs.release.outputs.new-release-version }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # 5. Bump Helm chart values and commit so Argo CD picks up the change
+  # 5. Bump chart values for Argo CD
   deploy-application:
-    name: Deploy Application via GitOps
+    name: Deploy via GitOps
+    needs: [ release, build-docker-image ]
     runs-on: ubuntu-latest
-    needs:
-      - release
-      - build-docker-image
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Bump image.tag in Production values
+      - name: Update prod values.yaml
         uses: fjogeleit/yaml-update-action@main
         with:
-          valueFile: 'envs/production/values.yaml'
-          propertyPath: 'image.tag'
+          valueFile: envs/production/values.yaml
+          propertyPath: image.tag
           value: ${{ needs.release.outputs.new-release-version }}
-          branch: main
           commitChange: true
           message: |
-            chore: Deploy Image Version ${{ needs.release.outputs.new-release-version }} [skip ci]
+            chore: Deploy Image ${{ needs.release.outputs.new-release-version }} [skip ci]

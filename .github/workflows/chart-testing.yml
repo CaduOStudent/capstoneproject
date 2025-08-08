@@ -3,28 +3,27 @@ on:
   workflow_call:
     inputs:
       chart-path:
-        description: 'Path to the Helm chart directory'
+        description: "Path to the Helm chart directory"
         required: true
         type: string
-        default: 'bookcatalog-chart'
       helm-version:
-        description: 'Helm CLI version'
+        description: "Helm CLI version"
         required: false
         type: string
-        default: 'v3.14.0'
+        default: "v3.14.0"
       ct-version:
-        description: 'chart-testing CLI version'
+        description: "chart-testing CLI version"
         required: false
         type: string
-        default: '3.10.0'
+        default: "3.10.0"
     secrets:
       KUBE_CONFIG:
-        description: 'Kubernetes config for real cluster installs'
+        description: "Optional KUBECONFIG for real cluster installs"
         required: false
 
 jobs:
   lint-and-test:
-    name: Lint and Install Helm Chart
+    name: Lint + Install Helm Chart
     runs-on: ubuntu-latest
 
     steps:
@@ -39,7 +38,7 @@ jobs:
       - name: Install chart-testing CLI
         run: |
           CT_VER="${{ inputs.ct-version }}"
-          curl -sL \
+          curl -sSL \
             "https://github.com/helm/chart-testing/releases/download/v${CT_VER}/chart-testing_${CT_VER}_Linux_x86_64.tar.gz" \
             | tar xz
           sudo mv ct /usr/local/bin/
@@ -47,14 +46,33 @@ jobs:
       - name: Lint Helm chart
         run: ct lint --charts "${{ inputs.chart-path }}"
 
+      # If user provided KUBE_CONFIG, use it; otherwise spin up Kind
+      - name: Setup K8s cluster
+        if: ${{ secrets.KUBE_CONFIG == '' }}
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: v0.17.0
+
+      - name: Configure KUBECONFIG
+        if: ${{ secrets.KUBE_CONFIG != '' }}
+        run: echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig && echo "::add-mask::${{ secrets.KUBE_CONFIG }}"
+
+      - name: Export KUBECONFIG
+        run: |
+          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+            export KUBECONFIG="$PWD/kubeconfig"
+          else
+            # Kind writes its kubeconfig to $HOME/.kube/config by default
+            export KUBECONFIG="${HOME}/.kube/config"
+          fi
+        shell: bash
+
       - name: Install chart in test namespace
-        if: secrets.KUBE_CONFIG != ''
-        env:
-          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
           NAMESPACE="ct-test-${{ github.sha }}"
-          kubectl create namespace "${NAMESPACE}" || true
+          kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml \
+            | kubectl apply -f -
           ct install \
             --charts "${{ inputs.chart-path }}" \
-            --namespace "${NAMESPACE }}" \
+            --namespace "${NAMESPACE}" \
             --skip-cleanup
