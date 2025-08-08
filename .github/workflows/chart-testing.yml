@@ -4,33 +4,34 @@ on:
     inputs:
       chart-path:
         description: "Path to the Helm chart directory"
-        required: true
         type: string
+        required: true
       helm-version:
         description: "Helm CLI version"
-        required: false
         type: string
+        required: false
         default: "v3.14.0"
       ct-version:
         description: "chart-testing CLI version"
-        required: false
         type: string
-        default: "3.10.0"
-    secrets:
-      KUBE_CONFIG:
-        description: "Optional KUBECONFIG for real cluster installs"
         required: false
+        default: "3.10.0"
+      kubeconfig:
+        description: "Optional KUBECONFIG contents"
+        type: string
+        required: false
+        default: ""
 
 jobs:
   lint-and-test:
-    name: Lint + Install Helm Chart
+    name: Lint & Install Helm Chart
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Helm
+      - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: ${{ inputs.helm-version }}
@@ -46,26 +47,21 @@ jobs:
       - name: Lint Helm chart
         run: ct lint --charts "${{ inputs.chart-path }}"
 
-      # If user provided KUBE_CONFIG, use it; otherwise spin up Kind
-      - name: Setup K8s cluster
-        if: ${{ secrets.KUBE_CONFIG == '' }}
-        uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: v0.17.0
+      - name: Create or reuse a Kubernetes cluster
+        if: ${{ inputs.kubeconfig == '' }}
+        uses: engineerd/setup-kind@v0.6.1
 
-      - name: Configure KUBECONFIG
-        if: ${{ secrets.KUBE_CONFIG != '' }}
-        run: echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig && echo "::add-mask::${{ secrets.KUBE_CONFIG }}"
+      - name: Write out provided kubeconfig
+        if: ${{ inputs.kubeconfig != '' }}
+        run: echo "${{ inputs.kubeconfig }}" > kubeconfig
 
       - name: Export KUBECONFIG
         run: |
-          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+          if [ -n "${{ inputs.kubeconfig }}" ]; then
             export KUBECONFIG="$PWD/kubeconfig"
           else
-            # Kind writes its kubeconfig to $HOME/.kube/config by default
             export KUBECONFIG="${HOME}/.kube/config"
           fi
-        shell: bash
 
       - name: Install chart in test namespace
         run: |
