@@ -4,7 +4,7 @@ on:
     secrets:
       github_token:
         description: "GitHub token for semantic-release"
-        required: true
+        required: false
 
 jobs:
   semantic-release:
@@ -32,8 +32,6 @@ jobs:
       - id: semantic
         name: Run semantic-release
         run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
 
     outputs:
       new-release-published: ${{ steps.semantic.outputs.newReleasePublished }}

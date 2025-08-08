@@ -9,7 +9,7 @@ on:
     secrets:
       github_token:
         description: "GitHub token for GHCR login"
-        required: true
+        required: false
 
 jobs:
   build-and-push:
