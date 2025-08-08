@@ -3,23 +3,35 @@ on:
   workflow_call:
     inputs:
       python-version:
-        type: string
+        description: "Python version for tests"
         required: true
+        type: string
     secrets:
+      django_secret:
+        description: "Django SECRET_KEY for test runs"
+        required: false
       POSTGRES_URL:
-        description: "Optional test DB URL"
+        description: "Optional Postgres connection URL"
         required: false
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ inputs.python-version }}
-      - name: Install requirements
+
+      - name: Install dependencies
         run: pip install -r requirements.txt
+
       - name: Run Django tests
+        env:
+          DJANGO_SECRET: ${{ secrets.DJANGO_SECRET }}
+          DATABASE_URL: ${{ secrets.POSTGRES_URL }}
         run: pytest
