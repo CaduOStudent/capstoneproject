@@ -26,7 +26,7 @@ config:
 secret:
   GITHUB_TOKEN: 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
   SECRET_KEY: m+j^4fwe@z_b9odd*xpy!w&huy#vcoibu0od*!1^#-%dm+_0cw
-  #github_fine_grained_token: {{ .Values.secret.github_fine_grained_token | quote }}
+  
 
 readinessProbe:
   enabled: true
