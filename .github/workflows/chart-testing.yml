@@ -4,22 +4,22 @@ on:
     inputs:
       chart-path:
         description: "Path to the Helm chart directory"
-        type: string
         required: true
+        type: string
       helm-version:
         description: "Helm CLI version"
-        type: string
         required: false
+        type: string
         default: "v3.14.0"
       ct-version:
         description: "chart-testing CLI version"
-        type: string
         required: false
+        type: string
         default: "3.10.0"
       kubeconfig:
-        description: "Optional KUBECONFIG contents"
-        type: string
+        description: "Optional raw kubeconfig YAML (paste your KUBE_CONFIG secret here)"
         required: false
+        type: string
         default: ""
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Helm
+      - name: Set up Helm CLI
         uses: azure/setup-helm@v3
         with:
           version: ${{ inputs.helm-version }}
@@ -47,27 +47,33 @@ jobs:
       - name: Lint Helm chart
         run: ct lint --charts "${{ inputs.chart-path }}"
 
-      - name: Create or reuse a Kubernetes cluster
-        if: ${{ inputs.kubeconfig == '' }}
-        uses: engineerd/setup-kind@v0.6.1
-
       - name: Write out provided kubeconfig
         if: ${{ inputs.kubeconfig != '' }}
         run: echo "${{ inputs.kubeconfig }}" > kubeconfig
 
+      - name: Create Kind cluster (if no config given)
+        if: ${{ inputs.kubeconfig == '' }}
+        uses: engineerd/setup-kind@v0.6.1
+        with:
+          version: v0.17.0
+          cluster: ct-test
+
       - name: Export KUBECONFIG
         run: |
           if [ -n "${{ inputs.kubeconfig }}" ]; then
+            echo "Using provided kubeconfig"
             export KUBECONFIG="$PWD/kubeconfig"
           else
+            echo "Using Kind's kubeconfig"
             export KUBECONFIG="${HOME}/.kube/config"
           fi
+        shell: bash
 
       - name: Install chart in test namespace
         run: |
           NAMESPACE="ct-test-${{ github.sha }}"
-          kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml \
-            | kubectl apply -f -
+          kubectl create namespace "${NAMESPACE}" \
+            --dry-run=client -o yaml | kubectl apply -f -
           ct install \
             --charts "${{ inputs.chart-path }}" \
             --namespace "${NAMESPACE}" \

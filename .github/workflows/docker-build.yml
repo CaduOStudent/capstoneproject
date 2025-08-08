@@ -7,9 +7,9 @@ on:
         required: true
         type: string
     secrets:
-      github_token:
-        description: "GitHub token for GHCR login"
-        required: false
+      ghcr_token:
+        description: "GHCR token (can be GHCR_TOKEN or a fine-grained PAT)"
+        required: true
 
 jobs:
   build-and-push:
@@ -31,9 +31,9 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.github_token }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build & push
+      - name: Build & push image
         uses: docker/build-push-action@v6
         with:
           context: .

@@ -18,7 +18,8 @@ jobs:
       chart-path: bookcatalog-chart
       helm-version: v3.14.0
       ct-version: 3.10.0
-      # kubeconfig: ${{ secrets.KUBE_CONFIG }}  # optional
+      # (optional) if you ever supply a real kubeconfig:
+      kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
   # 2. Run Django tests
   run-django-tests:
@@ -27,7 +28,8 @@ jobs:
     with:
       python-version: 3.10
     secrets:
-      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      django_secret: ${{ secrets.DJANGO_SECRET }}
+      POSTGRES_URL:  ${{ secrets.POSTGRES_URL }}
 
   # 3. Semantic release
   release:
@@ -43,13 +45,14 @@ jobs:
     with:
       image-tag: ${{ needs.release.outputs.new-release-version }}
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      ghcr_token: ${{ secrets.GHCR_FINE_GRAIN_TOKEN }}
 
   # 5. Bump Helm chart values for GitOps
   deploy-application:
     name: Deploy via GitOps
     needs: [ release, build-docker-image ]
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
