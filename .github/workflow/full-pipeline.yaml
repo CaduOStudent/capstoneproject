@@ -1,3 +1,4 @@
+#.github/workflows/full-pipeline.yaml
 name: CI Pipeline with ArgoCD Deployment
 
 on:

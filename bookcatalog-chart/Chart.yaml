@@ -1,3 +1,5 @@
+# bookcatalog-chart/Chart.yaml
+
 apiVersion: v2
 name: bookcatalog-chart
 description: A Helm chart for the Book Catalog Django application

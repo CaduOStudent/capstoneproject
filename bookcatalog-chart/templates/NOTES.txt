@@ -1,3 +1,5 @@
+#bookcatalog-chart/templates/NOTES.txt
+
 {{- if .Values.ingress.enabled }}
 Your application has been deployed and is available via Ingress at:
 

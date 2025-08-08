@@ -1,3 +1,5 @@
+#bookcatalog-chart/templates/_helpers.tpl 
+
 {{- define "bookcatalog-chart.labels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
