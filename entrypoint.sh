@@ -1,5 +1,4 @@
 # entrypoint.sh
-
 echo "Waiting for the database..."
 while ! nc -z $DATABASE_HOST 5432; do
     sleep 1

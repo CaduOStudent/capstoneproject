@@ -1,5 +1,4 @@
 #.ct.yaml
-
 chart-dirs:
   - bookcatalog-chart
 

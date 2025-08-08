@@ -1,5 +1,4 @@
 # bookcatalog-chart/templates/values.yaml
-
 replicaCount: 1
 
 image:
